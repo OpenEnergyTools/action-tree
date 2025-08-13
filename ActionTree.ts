@@ -32,6 +32,10 @@ export class ActionTree extends ScopedElementsMixin(LitElement) {
   @state()
   private folded: Set<string> = new Set();
 
+  // Track known paths to detect when new nodes are added
+  @state()
+  private knownPaths: Set<string> = new Set();
+
   // Track how many leaf columns to render
   @state()
   private maxLeafCols = 0;
@@ -42,19 +46,40 @@ export class ActionTree extends ScopedElementsMixin(LitElement) {
   }
 
   protected willUpdate(changed: Map<string, unknown>) {
-    if (changed.has('data') && this.data) {
-      // Fold all nodes with children by default, except the root
-      const folded = new Set<string>();
-      const walk = (node: TreeNode | null, path: (string | number)[] = []) => {
+    if (this.data) {
+      // Collect all current paths in the tree
+      const allCurrentPaths = new Set<string>();
+      const collectPaths = (node: TreeNode | null, path: (string | number)[] = []) => {
         if (!node) return;
-        // Fold nodes that have a children property (even if empty) by default
         if (path.length > 0 && node.children !== undefined) {
-          folded.add(this.pathKey(path));
+          const pathKey = this.pathKey(path);
+          allCurrentPaths.add(pathKey);
         }
-        node.children?.forEach((child, i) => walk(child, [...path, 'children', i]));
+        node.children?.forEach((child, i) => collectPaths(child, [...path, 'children', i]));
       };
-      walk(this.data, []);
-      this.folded = folded;
+      collectPaths(this.data, []);
+
+      // Find new paths that weren't known before
+      const updatedFolded = new Set(this.folded);
+
+      allCurrentPaths.forEach(pathKey => {
+        if (!this.knownPaths.has(pathKey)) {
+          // This is a new node, fold it
+          updatedFolded.add(pathKey);
+        }
+      });
+
+      // Remove fold state for paths that no longer exist
+      const cleanedFolded = new Set<string>();
+      updatedFolded.forEach(path => {
+        if (allCurrentPaths.has(path)) {
+          cleanedFolded.add(path);
+        }
+      });
+
+      // Update our state
+      this.folded = cleanedFolded;
+      this.knownPaths = allCurrentPaths;
 
       // compute max number of leaf values across the tree
       this.maxLeafCols = ActionTree.getMaxLeafCount(this.data);

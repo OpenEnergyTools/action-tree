@@ -2,7 +2,7 @@
   "name": "@openenergytools/action-tree",
   "description": "A tree web component with custom events for actions.",
   "license": "Apache-2.0",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publishConfig": {
     "access": "public"
   },
