@@ -47,6 +47,7 @@ This is a tree grid component allowing you to define various types of action on 
 | Name          | Privacy | Type          | Default     | Description | Inherited From |
 | ------------- | ------- | ------------- | ----------- | ----------- | -------------- |
 | `folded`      | private | `Set<string>` | `new Set()` |             |                |
+| `knownPaths`  | private | `Set<string>` | `new Set()` |             |                |
 | `maxLeafCols` | private | `number`      | `0`         |             |                |
 
 #### Methods
